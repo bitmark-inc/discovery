@@ -1,12 +1,15 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/viper"
+	"github.com/bitmark-inc/logger"
+	"github.com/hashicorp/hcl"
 )
 
 var (
@@ -14,27 +17,40 @@ var (
 )
 
 type currencyConfig struct {
-	URL              string `mapstructure:"url"`
-	SubEndpoint      string `mapstructure:"sub_endpoint"`
-	PubEndpoint      string `mapstructure:"sub_endpoint"`
-	RepEndpoint      string `mapstructure:"rep_endpoint"`
-	CachedBlockCount int    `mapstructure:"cached_block_count"`
+	URL              string `hcl:"url"`
+	SubEndpoint      string `hcl:"sub_endpoint"`
+	PubEndpoint      string `hcl:"sub_endpoint"`
+	RepEndpoint      string `hcl:"rep_endpoint"`
+	CachedBlockCount int    `hcl:"cached_block_count"`
+}
+
+type loggerConfig struct {
+	File   string `hcl:"file"`
+	Size   int    `hcl:"size"`
+	Number int    `hcl:"number"`
 }
 
 type config struct {
 	Bitcoin  currencyConfig
 	Litecoin currencyConfig
+	Logger   loggerConfig
 }
 
 func init() {
-	viper.SetConfigName("conf")
-	viper.AddConfigPath(".")
-	if err := viper.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("read conf failed: %s", err))
+	var path string
+	flag.StringVar(&path, "conf", "", "Specify configuration file")
+	flag.Parse()
+
+	dat, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(fmt.Sprintf("read conf file failed: %s", err))
 	}
-	if err := viper.Unmarshal(&cfg); err != nil {
-		panic(fmt.Errorf("parse conf failed: %s", err))
+
+	if err = hcl.Unmarshal(dat, &cfg); nil != err {
+		panic(fmt.Sprintf("parse conf file failed: %s", err))
 	}
+
+	logger.Initialise(cfg.Logger.File, cfg.Logger.Size, cfg.Logger.Number)
 }
 
 func main() {
