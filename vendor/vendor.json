@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "VOB4XEixLU6hciPjkRyYu5xuYDM=",
+			"path": "github.com/pebbe/zmq4",
+			"revision": "651d7b11cd31b16fb4c76741c234e258b6a8039b",
+			"revisionTime": "2017-06-03T08:44:38Z"
+		}
+	],
+	"rootPath": "hello"
+}
