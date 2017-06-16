@@ -93,40 +93,12 @@ func newBitcoinHandler(name string, conf currencyConfig) *bitcoinHandler {
 }
 
 func (b *bitcoinHandler) Run() {
-	done := make(chan struct{})
-	go b.rescanRecentBlocks(done)
-	go b.serveRequest(done)
-
+	go b.serveRequest()
 	go b.listenBlockchain()
 }
 
-func (b *bitcoinHandler) rescanRecentBlocks(done chan<- struct{}) {
-	b.logger.Info("start rescaning")
-
-	var info bitcoinChainInfo
-	b.fetcher.fetch("/rest/chaininfo.json", &info)
-
-	blocks := make([]bitcoinBlock, b.cachedBlockCount)
-	blockHash := info.Bestblockhash
-	for i := 0; i < b.cachedBlockCount; i++ {
-		var block bitcoinBlock
-		b.fetcher.fetch(fmt.Sprintf("/rest/block/%s.json", blockHash), &block)
-		blocks[b.cachedBlockCount-i-1] = block
-		blockHash = block.PreviousBlockhash
-	}
-
-	b.Lock()
-	b.cachedBlocks = append(blocks, b.cachedBlocks...)
-	b.Unlock()
-
-	b.logger.Info("end rescaning")
-
-	done <- struct{}{}
-}
-
-func (b *bitcoinHandler) serveRequest(done <-chan struct{}) {
-	<-done
-	b.logger.Info("start to serve requests")
+func (b *bitcoinHandler) serveRequest() {
+	b.rescanRecentBlocks()
 
 	for {
 		msg, err := b.rep.Recv(0)
@@ -151,8 +123,8 @@ func (b *bitcoinHandler) serveRequest(done <-chan struct{}) {
 
 		pastPayment := pastBitcoinPayment{make([]bitcoinTransaction, 0)}
 		for _, block := range blocks {
-			if ts > block.Time {
-				break
+			if block.Time < ts {
+				continue
 			}
 
 			for _, tx := range block.Tx {
@@ -165,6 +137,28 @@ func (b *bitcoinHandler) serveRequest(done <-chan struct{}) {
 		dat, _ := json.Marshal(&pastPayment)
 		b.rep.SendMessage("OK", dat)
 	}
+}
+
+func (b *bitcoinHandler) rescanRecentBlocks() {
+	b.logger.Info("start rescaning")
+
+	var info bitcoinChainInfo
+	b.fetcher.fetch("/rest/chaininfo.json", &info)
+
+	blocks := make([]bitcoinBlock, b.cachedBlockCount)
+	blockHash := info.Bestblockhash
+	for i := 0; i < b.cachedBlockCount; i++ {
+		var block bitcoinBlock
+		b.fetcher.fetch(fmt.Sprintf("/rest/block/%s.json", blockHash), &block)
+		blocks[b.cachedBlockCount-i-1] = block
+		blockHash = block.PreviousBlockhash
+	}
+
+	b.Lock()
+	b.cachedBlocks = append(blocks, b.cachedBlocks...)
+	b.Unlock()
+
+	b.logger.Info("end rescaning")
 }
 
 func (b *bitcoinHandler) listenBlockchain() {

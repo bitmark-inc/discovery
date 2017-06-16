@@ -9,9 +9,6 @@ func newLitecoinHandler(name string, conf currencyConfig) *litecoinHandler {
 }
 
 func (l *litecoinHandler) Run() {
-	done := make(chan struct{})
-	go l.rescanRecentBlocks(done)
-	go l.serveRequest(done)
-
+	go l.serveRequest()
 	go l.listenBlockchain()
 }
