@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"sync"
 
@@ -29,7 +31,6 @@ type bitcoinVout struct {
 
 type bitcoinTransaction struct {
 	TxID string        `json:"txid"`
-	Hash string        `json:"hash"`
 	Vout []bitcoinVout `json:"vout"`
 }
 
@@ -44,7 +45,7 @@ type bitcoinChainInfo struct {
 	Bestblockhash string `json:"bestblockhash"`
 }
 
-type pastBitcoinPaymentTransactions struct {
+type pastBitcoinPayment struct {
 	Transactions []bitcoinTransaction `json:"txs"`
 }
 
@@ -128,23 +129,27 @@ func (b *bitcoinHandler) serveRequest(done <-chan struct{}) {
 	b.logger.Info("start to serve requests")
 
 	for {
-		msg, err := b.rep.RecvMessageBytes(0)
-		b.logger.Infof("msg %s", string(msg[0]))
+		msg, err := b.rep.Recv(0)
 		if nil != err {
-			b.logger.Errorf("zmq recv error: %s", err)
+			b.logger.Errorf("failed to receive request message: %s", err)
+			b.rep.SendMessage("ERROR", err)
 			continue
 		}
 
-		ts, err := strconv.ParseInt(string(msg[0]), 10, 64)
+		// parse query parameters
+		args, _ := url.ParseQuery(msg)
+
+		ts, err := strconv.ParseInt(args.Get("ts"), 10, 64)
 		if err != nil {
-			b.rep.SendMessage("ERROR", err.Error())
+			b.rep.SendMessage("ERROR", errors.New("incorrect parameter"))
+			continue
 		}
 
 		b.RLock()
 		blocks := b.cachedBlocks
 		b.RUnlock()
 
-		txs := make([]bitcoinTransaction, 0)
+		pastPayment := pastBitcoinPayment{make([]bitcoinTransaction, 0)}
 		for _, block := range blocks {
 			if ts > block.Time {
 				break
@@ -152,14 +157,13 @@ func (b *bitcoinHandler) serveRequest(done <-chan struct{}) {
 
 			for _, tx := range block.Tx {
 				if isPaymentTransaction(&tx) {
-					txs = append(txs, tx)
+					pastPayment.Transactions = append(pastPayment.Transactions, tx)
 				}
 			}
 		}
 
-		pastTXs := pastBitcoinPaymentTransactions{txs}
-		bytes, _ := json.Marshal(pastTXs)
-		b.rep.SendMessage("OK", bytes)
+		dat, _ := json.Marshal(&pastPayment)
+		b.rep.SendMessage("OK", dat)
 	}
 }
 
@@ -192,7 +196,7 @@ func (b *bitcoinHandler) processNewTransaction(txHash string) {
 
 	if isPaymentTransaction(&tx) {
 		data, _ := json.Marshal(tx)
-		b.pub.SendMessage("bitcoin", data)
+		b.pub.SendMessage(b.name, data)
 	}
 }
 
