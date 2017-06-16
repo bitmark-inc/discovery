@@ -125,9 +125,11 @@ func (b *bitcoinHandler) rescanRecentBlocks(done chan<- struct{}) {
 
 func (b *bitcoinHandler) serveRequest(done <-chan struct{}) {
 	<-done
+	b.logger.Info("start to serve requests")
 
 	for {
 		msg, err := b.rep.RecvMessageBytes(0)
+		b.logger.Infof("msg %s", string(msg[0]))
 		if nil != err {
 			b.logger.Errorf("zmq recv error: %s", err)
 			continue
@@ -138,9 +140,12 @@ func (b *bitcoinHandler) serveRequest(done <-chan struct{}) {
 			b.rep.SendMessage("ERROR", err.Error())
 		}
 
-		txs := make([]bitcoinTransaction, 0)
 		b.RLock()
-		for _, block := range b.cachedBlocks {
+		blocks := b.cachedBlocks
+		b.RUnlock()
+
+		txs := make([]bitcoinTransaction, 0)
+		for _, block := range blocks {
 			if ts > block.Time {
 				break
 			}
@@ -151,7 +156,6 @@ func (b *bitcoinHandler) serveRequest(done <-chan struct{}) {
 				}
 			}
 		}
-		b.RUnlock()
 
 		pastTXs := pastBitcoinPaymentTransactions{txs}
 		bytes, _ := json.Marshal(pastTXs)
