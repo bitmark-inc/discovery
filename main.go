@@ -19,7 +19,7 @@ var (
 type currencyConfig struct {
 	URL              string `hcl:"url"`
 	SubEndpoint      string `hcl:"sub_endpoint"`
-	PubEndpoint      string `hcl:"sub_endpoint"`
+	PubEndpoint      string `hcl:"pub_endpoint"`
 	RepEndpoint      string `hcl:"rep_endpoint"`
 	CachedBlockCount int    `hcl:"cached_block_count"`
 }
