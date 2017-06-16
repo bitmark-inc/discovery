@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -23,6 +24,11 @@ func (f *fetcher) fetch(path string, reply interface{}) error {
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed http request: status code = %d; url = %s", resp.StatusCode, f.URL+path)
+	}
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if nil != err {
 		return err
