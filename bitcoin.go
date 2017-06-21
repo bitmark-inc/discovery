@@ -50,24 +50,17 @@ type pastBitcoinPayment struct {
 }
 
 type bitcoinHandler struct {
-	sync.RWMutex
+	*sync.RWMutex
 	name             string
 	logger           *logger.L
 	fetcher          *fetcher
 	sub              *zmq.Socket
 	pub              *zmq.Socket
-	rep              *zmq.Socket
 	cachedBlockCount int
 	cachedBlocks     []bitcoinBlock
 }
 
-func newBitcoinHandler(name string, conf currencyConfig) *bitcoinHandler {
-	pub, err := zmq.NewSocket(zmq.PUB)
-	if err != nil {
-		panic(err)
-	}
-	pub.Bind(conf.PubEndpoint)
-
+func newBitcoinHandler(name string, conf currencyConfig, pub *zmq.Socket) *bitcoinHandler {
 	sub, err := zmq.NewSocket(zmq.SUB)
 	if err != nil {
 		panic(err)
@@ -76,70 +69,18 @@ func newBitcoinHandler(name string, conf currencyConfig) *bitcoinHandler {
 	sub.SetSubscribe("hashtx")
 	sub.SetSubscribe("hashblock")
 
-	rep, err := zmq.NewSocket(zmq.REP)
-	if err != nil {
-		panic(err)
-	}
-	rep.Bind(conf.RepEndpoint)
-
 	logger := logger.New(name)
 	logger.ChangeLevel("info")
 
 	return &bitcoinHandler{
-		name: name, logger: logger, fetcher: &fetcher{conf.URL},
-		sub: sub, pub: pub, rep: rep,
-		cachedBlockCount: conf.CachedBlockCount, cachedBlocks: make([]bitcoinBlock, 0),
+		new(sync.RWMutex), name, logger, &fetcher{conf.URL},
+		sub, pub, conf.CachedBlockCount, make([]bitcoinBlock, 0),
 	}
 }
 
-func (b *bitcoinHandler) Run() {
-	go b.serveRequest()
-	go b.listenBlockchain()
-}
+func (b *bitcoinHandler) rescanRecentBlocks(wg *sync.WaitGroup) {
+	defer wg.Done()
 
-func (b *bitcoinHandler) serveRequest() {
-	b.rescanRecentBlocks()
-
-	for {
-		msg, err := b.rep.Recv(0)
-		if nil != err {
-			b.logger.Errorf("failed to receive request message: %s", err)
-			b.rep.SendMessage("ERROR", err)
-			continue
-		}
-
-		// parse query parameters
-		args, _ := url.ParseQuery(msg)
-
-		ts, err := strconv.ParseInt(args.Get("ts"), 10, 64)
-		if err != nil {
-			b.rep.SendMessage("ERROR", errors.New("incorrect parameter"))
-			continue
-		}
-
-		b.RLock()
-		blocks := b.cachedBlocks
-		b.RUnlock()
-
-		pastPayment := pastBitcoinPayment{make([]bitcoinTransaction, 0)}
-		for _, block := range blocks {
-			if block.Time < ts {
-				continue
-			}
-
-			for _, tx := range block.Tx {
-				if isPaymentTransaction(&tx) {
-					pastPayment.Transactions = append(pastPayment.Transactions, tx)
-				}
-			}
-		}
-
-		dat, _ := json.Marshal(&pastPayment)
-		b.rep.SendMessage("OK", dat)
-	}
-}
-
-func (b *bitcoinHandler) rescanRecentBlocks() {
 	b.logger.Info("start rescaning")
 
 	var info bitcoinChainInfo
@@ -161,6 +102,36 @@ func (b *bitcoinHandler) rescanRecentBlocks() {
 	b.logger.Info("end rescaning")
 }
 
+func (b *bitcoinHandler) handleTxQuery(query string) (string, interface{}) {
+	// parse query parameters
+	args, _ := url.ParseQuery(query)
+
+	ts, err := strconv.ParseInt(args.Get("ts"), 10, 64)
+	if err != nil {
+		return "ERROR", errors.New("incorrect parameter")
+	}
+
+	b.RLock()
+	blocks := b.cachedBlocks
+	b.RUnlock()
+
+	pastPayment := pastBitcoinPayment{make([]bitcoinTransaction, 0)}
+	for _, block := range blocks {
+		if block.Time < ts {
+			continue
+		}
+
+		for _, tx := range block.Tx {
+			if isBitcoinPaymentTX(&tx) {
+				pastPayment.Transactions = append(pastPayment.Transactions, tx)
+			}
+		}
+	}
+
+	dat, _ := json.Marshal(&pastPayment)
+	return "OK", dat
+}
+
 func (b *bitcoinHandler) listenBlockchain() {
 	for {
 		msg, err := b.sub.RecvMessageBytes(0)
@@ -173,7 +144,7 @@ func (b *bitcoinHandler) listenBlockchain() {
 		case "hashtx":
 			txHash := hex.EncodeToString(msg[1])
 			b.logger.Debugf("tx hash received: %v", txHash)
-			b.processNewTransaction(txHash)
+			b.processNewTx(txHash)
 		case "hashblock":
 			blockHash := hex.EncodeToString(msg[1])
 			b.logger.Infof("block hash received: %v", blockHash)
@@ -182,13 +153,13 @@ func (b *bitcoinHandler) listenBlockchain() {
 	}
 }
 
-func (b *bitcoinHandler) processNewTransaction(txHash string) {
+func (b *bitcoinHandler) processNewTx(txHash string) {
 	var tx bitcoinTransaction
 	if err := b.fetcher.fetch(fmt.Sprintf("/rest/tx/%s.json", txHash), &tx); err != nil {
 		b.logger.Errorf("fetch new tx failed: %s", err)
 	}
 
-	if isPaymentTransaction(&tx) {
+	if isBitcoinPaymentTX(&tx) {
 		data, _ := json.Marshal(tx)
 		b.pub.SendMessage(b.name, data)
 	}
@@ -206,7 +177,7 @@ func (b *bitcoinHandler) processNewBlock(blockHash string) {
 	b.Unlock()
 }
 
-func isPaymentTransaction(tx *bitcoinTransaction) bool {
+func isBitcoinPaymentTX(tx *bitcoinTransaction) bool {
 	for _, vout := range tx.Vout {
 		if bitcoinOPReturnRecordLength == len(vout.ScriptPubKey.Hex) && bitcoinOPReturnHexCode == vout.ScriptPubKey.Hex[0:4] {
 			return true
