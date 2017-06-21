@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 
@@ -44,7 +48,7 @@ type config struct {
 
 type cryptoCurrencyHandler interface {
 	rescanRecentBlocks(wg *sync.WaitGroup)
-	handleTxQuery(query string) (string, interface{})
+	handleTxQuery(ts int64) interface{}
 	listenBlockchain()
 }
 
@@ -94,6 +98,11 @@ func main() {
 	<-ch
 }
 
+type paymentTxs struct {
+	Bitcoin  interface{} `json:"bitcoin"`
+	Litecoin interface{} `json:"litecoin"`
+}
+
 func serveRequest() {
 	var wg sync.WaitGroup
 
@@ -105,16 +114,25 @@ func serveRequest() {
 
 	log.Info("start to serve requests")
 	for {
-		msg, err := rep.RecvMessageBytes(0)
+		msg, err := rep.Recv(0)
 		if nil != err {
 			log.Errorf("failed to receive request message: %s", err)
 			rep.SendMessage("ERROR", err)
 			continue
 		}
 
-		currency := string(msg[0])
-		query := string(msg[1])
-		status, dat := handlers[currency].handleTxQuery(query)
-		rep.SendMessage(status, dat)
+		// parse query parameters
+		args, _ := url.ParseQuery(msg)
+		ts, err := strconv.ParseInt(args.Get("ts"), 10, 64)
+		if err != nil {
+			rep.SendMessage("ERROR", errors.New("incorrect parameter"))
+		}
+
+		txs := paymentTxs{
+			handlers["bitcoin"].handleTxQuery(ts),
+			handlers["litecoin"].handleTxQuery(ts),
+		}
+		dat, _ := json.Marshal(&txs)
+		rep.SendMessage("OK", dat)
 	}
 }

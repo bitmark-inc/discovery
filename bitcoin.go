@@ -3,10 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"net/url"
-	"strconv"
 	"sync"
 
 	"github.com/bitmark-inc/logger"
@@ -43,10 +40,6 @@ type bitcoinBlock struct {
 
 type bitcoinChainInfo struct {
 	Bestblockhash string `json:"bestblockhash"`
-}
-
-type pastBitcoinPayment struct {
-	Transactions []bitcoinTransaction `json:"txs"`
 }
 
 type bitcoinHandler struct {
@@ -102,20 +95,12 @@ func (b *bitcoinHandler) rescanRecentBlocks(wg *sync.WaitGroup) {
 	b.logger.Info("end rescaning")
 }
 
-func (b *bitcoinHandler) handleTxQuery(query string) (string, interface{}) {
-	// parse query parameters
-	args, _ := url.ParseQuery(query)
-
-	ts, err := strconv.ParseInt(args.Get("ts"), 10, 64)
-	if err != nil {
-		return "ERROR", errors.New("incorrect parameter")
-	}
-
+func (b *bitcoinHandler) handleTxQuery(ts int64) interface{} {
 	b.RLock()
 	blocks := b.cachedBlocks
 	b.RUnlock()
 
-	pastPayment := pastBitcoinPayment{make([]bitcoinTransaction, 0)}
+	txs := make([]bitcoinTransaction, 0)
 	for _, block := range blocks {
 		if block.Time < ts {
 			continue
@@ -123,13 +108,12 @@ func (b *bitcoinHandler) handleTxQuery(query string) (string, interface{}) {
 
 		for _, tx := range block.Tx {
 			if isBitcoinPaymentTX(&tx) {
-				pastPayment.Transactions = append(pastPayment.Transactions, tx)
+				txs = append(txs, tx)
 			}
 		}
 	}
 
-	dat, _ := json.Marshal(&pastPayment)
-	return "OK", dat
+	return txs
 }
 
 func (b *bitcoinHandler) listenBlockchain() {
