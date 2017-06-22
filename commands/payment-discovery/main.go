@@ -18,9 +18,9 @@ var (
 
 func main() {
 	subcmd := flag.NewFlagSet("subcmd", flag.ExitOnError)
-	subcmd.StringVar(&currency, "currency", "bitcoin", "currency")
-	subcmd.StringVar(&addr, "addr", "", "addr")
-	subcmd.IntVar(&timestamp, "timestamp", 0, "timestamp")
+	subcmd.StringVar(&currency, "currency", "bitcoin", "Specify the currency (possible values: bitcoin, litecoin)")
+	subcmd.StringVar(&addr, "addr", "", "Specify the zeromq socket address of discovery proxy")
+	subcmd.IntVar(&timestamp, "timestamp", 0, "Return all payment txs after the timestamp")
 	subcmd.Parse(os.Args[2:])
 
 	switch os.Args[1] {
@@ -57,7 +57,7 @@ func query(addr string, timestamp int) {
 
 	socket.Connect(addr)
 
-	socket.Send(fmt.Sprintf("ts=%d", timestamp), 0)
+	socket.SendMessage(currency, timestamp)
 	msg, err := socket.RecvMessageBytes(0)
 	if err != nil {
 		fmt.Printf("error: %s", err)

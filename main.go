@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -114,24 +113,20 @@ func serveRequest() {
 
 	log.Info("start to serve requests")
 	for {
-		msg, err := rep.Recv(0)
+		msg, err := rep.RecvMessageBytes(0)
 		if nil != err {
 			log.Errorf("failed to receive request message: %s", err)
 			rep.SendMessage("ERROR", err)
 			continue
 		}
 
-		// parse query parameters
-		args, _ := url.ParseQuery(msg)
-		ts, err := strconv.ParseInt(args.Get("ts"), 10, 64)
+		currency := string(msg[0])
+		ts, err := strconv.ParseInt(string(msg[1]), 10, 64)
 		if err != nil {
 			rep.SendMessage("ERROR", errors.New("incorrect parameter"))
 		}
 
-		txs := paymentTxs{
-			handlers["bitcoin"].handleTxQuery(ts),
-			handlers["litecoin"].handleTxQuery(ts),
-		}
+		txs := handlers[currency].handleTxQuery(ts)
 		dat, _ := json.Marshal(&txs)
 		rep.SendMessage("OK", dat)
 	}
