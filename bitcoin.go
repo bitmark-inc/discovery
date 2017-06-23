@@ -144,6 +144,7 @@ func (b *bitcoinHandler) processNewTx(txHash string) {
 	}
 
 	if isBitcoinPaymentTX(&tx) {
+		b.logger.Info(tx.TxID)
 		data, _ := json.Marshal(tx)
 		b.pub.SendMessage(b.name, data)
 	}
