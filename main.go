@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -81,8 +82,8 @@ func init() {
 	rep.Bind(cfg.RepEndpoint)
 
 	handlers = make(map[string]cryptoCurrencyHandler)
-	handlers["bitcoin"] = newBitcoinHandler("bitcoin", cfg.Currency.Bitcoin, pub)
-	handlers["litecoin"] = newLitecoinHandler("litecoin", cfg.Currency.Litecoin, pub)
+	handlers["BTC"] = newBitcoinHandler("BTC", cfg.Currency.Bitcoin, pub)
+	handlers["LTC"] = newLitecoinHandler("LTC", cfg.Currency.Litecoin, pub)
 }
 
 func main() {
@@ -120,7 +121,7 @@ func serveRequest() {
 			continue
 		}
 
-		currency := string(msg[0])
+		currency := strings.ToUpper(string(msg[0]))
 		ts, err := strconv.ParseInt(string(msg[1]), 10, 64)
 		if err != nil {
 			rep.SendMessage("ERROR", errors.New("incorrect parameter"))

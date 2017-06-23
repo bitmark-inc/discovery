@@ -13,11 +13,11 @@ $ go install github.com/bitmark-inc/discovery/commands/payment-discovery
 ### Subscribe payment transactions
 
 ```
-payment-discovery listen -addr <discovery_pub_endpoint> -currency <bitcoin|litecoin>
+payment-discovery listen -addr <discovery_pub_endpoint> -currency <btc|ltc>
 ```
 
 ### Retrieve payment transactions after the specified timestamp
 
 ```
-payment-discovery query -addr <discovery_rep_endpoint> -currency <bitcoin|litecoin> -timestamp <epoch_time_in_seconds>
+payment-discovery query -addr <discovery_rep_endpoint> -currency <btc|ltc> -timestamp <epoch_time_in_seconds>
 ```
