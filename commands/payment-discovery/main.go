@@ -18,7 +18,7 @@ var (
 
 func main() {
 	subcmd := flag.NewFlagSet("subcmd", flag.ExitOnError)
-	subcmd.StringVar(&currency, "currency", "bitcoin", "Specify the currency (possible values: bitcoin, litecoin)")
+	subcmd.StringVar(&currency, "currency", "btc", "Specify the currency (possible values: btc, ltc)")
 	subcmd.StringVar(&addr, "addr", "", "Specify the zeromq socket address of discovery proxy")
 	subcmd.IntVar(&timestamp, "timestamp", 0, "Return all payment txs after the timestamp")
 	subcmd.Parse(os.Args[2:])
