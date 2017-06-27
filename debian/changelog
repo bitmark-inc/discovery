@@ -1,11 +1,11 @@
-discovery (1.0.1-1) unstable; urgency=medium
+discovery (0.1-1) unstable; urgency=medium
 
-  * Use non-native pkg version.
+  * Use non-native package version.
 
  -- Bitmark Developers <developers@bitmark.com>  Tue, 27 Jun 2017 11:50:00 +0800
 
- discovery (0.1) unstable; urgency=medium
+discovery (0.1) unstable; urgency=medium
 
-   * Initial release.
+  * Initial release.
 
-  -- Bitmark Developers <developers@bitmark.com>  Tue, 27 Jun 2017 11:50:00 +0800
+ -- Bitmark Developers <developers@bitmark.com>  Tue, 27 Jun 2017 11:50:00 +0800
