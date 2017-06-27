@@ -1,3 +1,9 @@
+discovery (0.1-2) unstable; urgency=medium
+
+  * Fix build rules.
+
+ -- Bitmark Developers <developers@bitmark.com>  Tue, 27 Jun 2017 17:25:00 +0800
+
 discovery (0.1-1) unstable; urgency=medium
 
   * Use non-native package version.
