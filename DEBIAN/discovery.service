@@ -1,0 +1,21 @@
+[Unit]
+Description=Discover Bitmark transfer payments
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+
+User=discovery
+Group=discovery
+
+PIDFile=/run/discovery.pid
+
+StandardOutput=journal
+StandardError=journal
+
+WorkingDirectory=/var/lib/discovery
+ExecStart=/usr/sbin/discovery --quiet --config-file=/etc/discovery.conf
+
+[Install]
+WantedBy=multi-user.target
