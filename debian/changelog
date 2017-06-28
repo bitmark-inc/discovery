@@ -1,3 +1,9 @@
+discovery (0.3) unstable; urgency=medium
+
+  * Change log level.
+
+ -- Bitmark Developers <developers@bitmark.com>  Tue, 28 Jun 2017 12:35:00 +0800
+
 discovery (0.2) unstable; urgency=medium
 
   * Change to libzmq5 from libzmq3.

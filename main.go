@@ -67,6 +67,7 @@ func init() {
 
 	logger.Initialise(cfg.Logger.File, cfg.Logger.Size, cfg.Logger.Number)
 	log = logger.New("discovery")
+	log.ChangeLevel("info")
 
 	pub, err = zmq.NewSocket(zmq.PUB)
 	if err != nil {
