@@ -1,3 +1,9 @@
+discovery (0.4) unstable; urgency=medium
+
+  * Change the configuration sample.
+
+ -- Bitmark Developers <developers@bitmark.com>  Mon, 3 Jul 2017 10:30:00 +0800
+
 discovery (0.3) unstable; urgency=medium
 
   * Change log level.
