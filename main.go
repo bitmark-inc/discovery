@@ -37,12 +37,8 @@ type config struct {
 	Currency    struct {
 		Bitcoin  currencyConfig
 		Litecoin currencyConfig
-	}
-	Logger struct {
-		File   string `hcl:"file"`
-		Size   int    `hcl:"size"`
-		Number int    `hcl:"number"`
-	}
+	} `hcl:"currency"`
+	Logging logger.Configuration `hcl:"logging"`
 }
 
 type cryptoCurrencyHandler interface {
@@ -65,9 +61,10 @@ func init() {
 		panic(fmt.Sprintf("parse conf file failed: %s", err))
 	}
 
-	logger.Initialise(cfg.Logger.File, cfg.Logger.Size, cfg.Logger.Number)
+	if err = logger.Initialise(cfg.Logging); err != nil {
+		panic(fmt.Sprintf("logger initialization failed: %s", err))
+	}
 	log = logger.New("discovery")
-	log.ChangeLevel("info")
 
 	pub, err = zmq.NewSocket(zmq.PUB)
 	if err != nil {
@@ -96,6 +93,8 @@ func main() {
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
+
+	logger.Finalise()
 }
 
 type paymentTxs struct {

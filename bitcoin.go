@@ -63,7 +63,6 @@ func newBitcoinHandler(name string, conf currencyConfig, pub *zmq.Socket) *bitco
 	sub.SetSubscribe("hashblock")
 
 	logger := logger.New(name)
-	logger.ChangeLevel("info")
 
 	return &bitcoinHandler{
 		new(sync.RWMutex), name, logger, &fetcher{conf.URL},

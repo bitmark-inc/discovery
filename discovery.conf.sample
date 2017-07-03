@@ -16,8 +16,12 @@ currency {
   }
 }
 
-logger {
-  file = "/var/lib/discovery/discovery.log"
+logging {
+  directory = "/var/lib/discovery/log"
+  file = "discovery.log"
   size = 1048576
-  number = 10
+  count = 10
+  levels {
+    DEFAULT = "info"
+  }
 }
