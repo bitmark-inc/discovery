@@ -1,6 +1,6 @@
-pub_endpoint = "tcp://0.0.0.0:5566"
+pub_endpoint = "tcp://*:5566"
 
-rep_endpoint = "tcp://0.0.0.0:5567"
+rep_endpoint = "tcp://*:5567"
 
 currency {
   bitcoin {
@@ -17,7 +17,7 @@ currency {
 }
 
 logger {
-  file = "/tmp/discovery.log"
+  file = "/var/lib/discovery/discovery.log"
   size = 1048576
   number = 10
 }
