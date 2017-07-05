@@ -1,28 +1,28 @@
-discovery (0.5) unstable; urgency=medium
+discovery (0.5-1) unstable; urgency=medium
 
   * Adapt to bitmark-inc/logger (v3.2).
 
  -- Bitmark Developers <developers@bitmark.com>  Mon, 3 Jul 2017 16:30:00 +0800
 
-discovery (0.4) unstable; urgency=medium
+discovery (0.4-1) unstable; urgency=medium
 
   * Change the configuration sample.
 
  -- Bitmark Developers <developers@bitmark.com>  Mon, 3 Jul 2017 10:30:00 +0800
 
-discovery (0.3) unstable; urgency=medium
+discovery (0.3-1) unstable; urgency=medium
 
   * Change log level.
 
  -- Bitmark Developers <developers@bitmark.com>  Tue, 28 Jun 2017 12:35:00 +0800
 
-discovery (0.2) unstable; urgency=medium
+discovery (0.2-1) unstable; urgency=medium
 
   * Change to libzmq5 from libzmq3.
 
  -- Bitmark Developers <developers@bitmark.com>  Tue, 28 Jun 2017 10:07:00 +0800
 
-discovery (0.1) unstable; urgency=medium
+discovery (0.1-1) unstable; urgency=medium
 
   * Initial release.
 
