@@ -1,3 +1,9 @@
+discovery (0.6-1) unstable; urgency=medium
+
+  * add Copyright and Licensing information
+
+ -- Christopher Hall <hsw@bitmark.com>  Wed, 05 Jul 2017 08:29:48 +0000
+
 discovery (0.5-1) unstable; urgency=medium
 
   * Adapt to bitmark-inc/logger (v3.2).
