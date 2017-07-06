@@ -1,3 +1,9 @@
+discovery (0.7-1) unstable; urgency=medium
+
+  * unify currency names
+
+ -- Linzy Hu <linzy@bitmark.com>  Thu, 06 Jul 2017 12:45:00 +0000
+
 discovery (0.6-1) unstable; urgency=medium
 
   * add Copyright and Licensing information
