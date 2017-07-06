@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	zmq "github.com/pebbe/zmq4"
 )
@@ -26,6 +27,8 @@ func main() {
 	subcmd.StringVar(&addr, "addr", "", "Specify the zeromq socket address of discovery proxy")
 	subcmd.IntVar(&timestamp, "timestamp", 0, "Return all payment txs after the timestamp")
 	subcmd.Parse(os.Args[2:])
+
+	currency = strings.ToUpper(currency)
 
 	switch os.Args[1] {
 	case "listen":

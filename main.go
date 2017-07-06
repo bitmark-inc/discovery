@@ -83,8 +83,8 @@ func init() {
 	rep.Bind(cfg.RepEndpoint)
 
 	handlers = make(map[string]cryptoCurrencyHandler)
-	handlers["btc"] = newBitcoinHandler("btc", cfg.Currency.Bitcoin, pub)
-	handlers["ltc"] = newLitecoinHandler("ltc", cfg.Currency.Litecoin, pub)
+	handlers["BTC"] = newBitcoinHandler("BTC", cfg.Currency.Bitcoin, pub)
+	handlers["LTC"] = newLitecoinHandler("LTC", cfg.Currency.Litecoin, pub)
 }
 
 func main() {
