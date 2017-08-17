@@ -9,16 +9,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/bitmark-inc/logger"
+	"github.com/hashicorp/hcl"
+	zmq "github.com/pebbe/zmq4"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"strconv"
 	"sync"
 	"syscall"
-
-	"github.com/bitmark-inc/logger"
-	"github.com/hashicorp/hcl"
-	zmq "github.com/pebbe/zmq4"
 )
 
 var (
@@ -74,14 +73,23 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	pub.Bind(cfg.PubEndpoint)
+	pub.SetIpv6(true)
+
+	err = pub.Bind(cfg.PubEndpoint)
+	if err != nil {
+		panic(err)
+	}
 
 	rep, err = zmq.NewSocket(zmq.REP)
 	if err != nil {
 		panic(err)
 	}
-	rep.Bind(cfg.RepEndpoint)
+	rep.SetIpv6(true)
 
+	err = rep.Bind(cfg.RepEndpoint)
+	if err != nil {
+		panic(err)
+	}
 	handlers = make(map[string]cryptoCurrencyHandler)
 	handlers["BTC"] = newBitcoinHandler("BTC", cfg.Currency.Bitcoin, pub)
 	handlers["LTC"] = newLitecoinHandler("LTC", cfg.Currency.Litecoin, pub)
@@ -116,12 +124,13 @@ func serveRequest() {
 	wg.Wait()
 
 	log.Info("start to serve requests")
+serve_requests:
 	for {
 		msg, err := rep.RecvMessageBytes(0)
 		if nil != err {
 			log.Errorf("failed to receive request message: %s", err)
 			rep.SendMessage("ERROR", err)
-			continue
+			continue serve_requests
 		}
 
 		currency := string(msg[0])
