@@ -137,6 +137,7 @@ serve_requests:
 		ts, err := strconv.ParseInt(string(msg[1]), 10, 64)
 		if err != nil {
 			rep.SendMessage("ERROR", errors.New("incorrect parameter"))
+			continue serve_requests
 		}
 
 		txs := handlers[currency].handleTxQuery(ts)
