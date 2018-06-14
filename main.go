@@ -9,15 +9,17 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/bitmark-inc/logger"
-	"github.com/hashicorp/hcl"
-	zmq "github.com/pebbe/zmq4"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"strconv"
 	"sync"
 	"syscall"
+
+	"github.com/hashicorp/hcl"
+	zmq "github.com/pebbe/zmq4"
+
+	"github.com/bitmark-inc/logger"
 )
 
 var (
