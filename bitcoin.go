@@ -8,10 +8,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"sync"
-
 	"github.com/bitmark-inc/logger"
 	zmq "github.com/pebbe/zmq4"
+	"sync"
 )
 
 const (
@@ -47,9 +46,9 @@ type bitcoinChainInfo struct {
 }
 
 type bitcoinHandler struct {
-	*sync.RWMutex
+	sync.RWMutex
 	name             string
-	logger           *logger.L
+	log              *logger.L
 	fetcher          *fetcher
 	sub              *zmq.Socket
 	pub              *zmq.Socket
@@ -66,18 +65,24 @@ func newBitcoinHandler(name string, conf currencyConfig, pub *zmq.Socket) *bitco
 	sub.SetSubscribe("hashtx")
 	sub.SetSubscribe("hashblock")
 
-	logger := logger.New(name)
+	log := logger.New(name)
+	log.Info("starting…")
 
 	return &bitcoinHandler{
-		new(sync.RWMutex), name, logger, &fetcher{conf.URL},
-		sub, pub, conf.CachedBlockCount, make([]bitcoinBlock, 0),
+		name:             name,
+		log:              log,
+		fetcher:          &fetcher{conf.URL},
+		sub:              sub,
+		pub:              pub,
+		cachedBlockCount: conf.CachedBlockCount,
+		cachedBlocks:     make([]bitcoinBlock, 0),
 	}
 }
 
 func (b *bitcoinHandler) rescanRecentBlocks(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	b.logger.Info("start rescaning")
+	b.log.Info("start rescaning")
 
 	var info bitcoinChainInfo
 	b.fetcher.fetch("/rest/chaininfo.json", &info)
@@ -95,7 +100,7 @@ func (b *bitcoinHandler) rescanRecentBlocks(wg *sync.WaitGroup) {
 	b.cachedBlocks = append(blocks, b.cachedBlocks...)
 	b.Unlock()
 
-	b.logger.Info("end rescaning")
+	b.log.Info("end rescaning")
 }
 
 func (b *bitcoinHandler) handleTxQuery(ts int64) interface{} {
@@ -104,9 +109,10 @@ func (b *bitcoinHandler) handleTxQuery(ts int64) interface{} {
 	b.RUnlock()
 
 	txs := make([]bitcoinTransaction, 0)
+scan_blocks:
 	for _, block := range blocks {
 		if block.Time < ts {
-			continue
+			continue scan_blocks
 		}
 
 		for _, tx := range block.Tx {
@@ -120,21 +126,22 @@ func (b *bitcoinHandler) handleTxQuery(ts int64) interface{} {
 }
 
 func (b *bitcoinHandler) listenBlockchain() {
+loop:
 	for {
 		msg, err := b.sub.RecvMessageBytes(0)
 		if err != nil {
-			b.logger.Errorf("zmq recv error: %s", err)
-			continue
+			b.log.Errorf("zmq recv error: %s", err)
+			continue loop
 		}
 
 		switch topic := string(msg[0]); topic {
 		case "hashtx":
 			txHash := hex.EncodeToString(msg[1])
-			b.logger.Debugf("tx hash received: %v", txHash)
+			b.log.Debugf("tx hash received: %v", txHash)
 			b.processNewTx(txHash)
 		case "hashblock":
 			blockHash := hex.EncodeToString(msg[1])
-			b.logger.Infof("block hash received: %v", blockHash)
+			b.log.Infof("block hash received: %v", blockHash)
 			b.processNewBlock(blockHash)
 		}
 	}
@@ -143,11 +150,11 @@ func (b *bitcoinHandler) listenBlockchain() {
 func (b *bitcoinHandler) processNewTx(txHash string) {
 	var tx bitcoinTransaction
 	if err := b.fetcher.fetch(fmt.Sprintf("/rest/tx/%s.json", txHash), &tx); err != nil {
-		b.logger.Errorf("fetch new tx failed: %s", err)
+		b.log.Errorf("fetch new tx failed: %s", err)
 	}
 
 	if isBitcoinPaymentTX(&tx) {
-		b.logger.Info(tx.TxID)
+		b.log.Infof("payment tx id: %s", tx.TxID)
 		data, _ := json.Marshal(tx)
 		b.pub.SendMessage(b.name, data)
 	}
@@ -156,7 +163,7 @@ func (b *bitcoinHandler) processNewTx(txHash string) {
 func (b *bitcoinHandler) processNewBlock(blockHash string) {
 	var block bitcoinBlock
 	if err := b.fetcher.fetch(fmt.Sprintf("/rest/block/%s.json", blockHash), &block); err != nil {
-		b.logger.Errorf("fetch new block failed: %s", err)
+		b.log.Errorf("fetch new block failed: %s", err)
 	}
 
 	b.Lock()
