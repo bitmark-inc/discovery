@@ -8,11 +8,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"sync"
-
-	zmq "github.com/pebbe/zmq4"
-
 	"github.com/bitmark-inc/logger"
+	zmq "github.com/pebbe/zmq4"
+	"sync"
 )
 
 const (
@@ -136,6 +134,8 @@ loop:
 			continue loop
 		}
 
+		b.log.Debugf("topic received: %q", msg[0])
+
 		switch topic := string(msg[0]); topic {
 		case "hashtx":
 			txHash := hex.EncodeToString(msg[1])
@@ -172,6 +172,14 @@ func (b *bitcoinHandler) processNewBlock(blockHash string) {
 	b.cachedBlocks = append(b.cachedBlocks, block)
 	b.cachedBlocks = b.cachedBlocks[1:]
 	b.Unlock()
+
+	for _, tx := range block.Tx {
+		if isBitcoinPaymentTX(&tx) {
+			b.log.Infof("resend: payment tx id: %s", tx.TxID)
+			data, _ := json.Marshal(tx)
+			b.pub.SendMessage(b.name, data)
+		}
+	}
 }
 
 func isBitcoinPaymentTX(tx *bitcoinTransaction) bool {
