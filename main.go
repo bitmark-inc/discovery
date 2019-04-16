@@ -15,6 +15,7 @@ import (
 	"sync"
 	"syscall"
 
+	lua "github.com/bitmark-inc/bitmarkd/configuration"
 	zmq "github.com/pebbe/zmq4"
 
 	"github.com/bitmark-inc/logger"
@@ -38,7 +39,7 @@ func init() {
 	var path string
 	flag.StringVar(&path, "conf", "", "Specify configuration file")
 	flag.Parse()
-	if err := ParseConfigurationFile(path, &cfg); err != nil {
+	if err := lua.ParseConfigurationFile(path, &cfg); err != nil {
 		panic(fmt.Sprintf("config file read failed: %s", err))
 	}
 	if err := logger.Initialise(cfg.Logging); err != nil {
