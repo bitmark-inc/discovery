@@ -58,7 +58,6 @@ func init() {
 		panic(err)
 	}
 	pub.SetIpv6(true)
-	fmt.Println("cfg.PubEndpoint:" + cfg.PubEndpoint)
 	err = pub.Bind(cfg.PubEndpoint)
 	if err != nil {
 		panic(err)
