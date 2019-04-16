@@ -41,20 +41,23 @@ func init() {
 	if err := ParseConfigurationFile(path, &cfg); err != nil {
 		panic(fmt.Sprintf("config file read failed: %s", err))
 	}
-	fmt.Println(cfg)
-	fmt.Println(cfg.Logging.Directory)
-	fmt.Println(cfg.Logging.File)
 	if err := logger.Initialise(cfg.Logging); err != nil {
-		panic(fmt.Sprintf("logger initialization failed: %s", err))
+		fmt.Printf("logger initialization failed: %s\n", err)
 	}
 	log = logger.New("discovery")
-	log.Warn("new new new new discovery")
+	log.Info(fmt.Sprintf("DataDirectory:%s", cfg.DataDirectory))
+	log.Info(fmt.Sprintf("PubEndpoint:%s", cfg.PubEndpoint))
+	log.Info(fmt.Sprintf("RepEndpoint:%s", cfg.RepEndpoint))
+	log.Info(fmt.Sprintf("Bitcoin URL:%s CachedBlockCount:%d SubEndpoint:%s", cfg.Currency.Bitcoin.URL, cfg.Currency.Bitcoin.CachedBlockCount, cfg.Currency.Bitcoin.SubEndpoint))
+	log.Info(fmt.Sprintf("Litecoin URL:%s CachedBlockCount:%d SubEndpoint:%s", cfg.Currency.Litecoin.URL, cfg.Currency.Litecoin.CachedBlockCount, cfg.Currency.Litecoin.SubEndpoint))
+	log.Info(fmt.Sprintf("LogDir:%s LogFile:%s", cfg.Logging.Directory, cfg.Logging.File))
+
 	pub, err := zmq.NewSocket(zmq.PUB)
 	if err != nil {
 		panic(err)
 	}
 	pub.SetIpv6(true)
-	log.Warn("cfg.PubEndpoint:" + cfg.PubEndpoint)
+	fmt.Println("cfg.PubEndpoint:" + cfg.PubEndpoint)
 	err = pub.Bind(cfg.PubEndpoint)
 	if err != nil {
 		panic(err)
