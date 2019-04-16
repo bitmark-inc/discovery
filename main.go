@@ -43,7 +43,7 @@ func init() {
 		panic(fmt.Sprintf("config file read failed: %s", err))
 	}
 	if err := logger.Initialise(cfg.Logging); err != nil {
-		fmt.Printf("logger initialization failed: %s\n", err)
+		panic(fmt.Sprintf("logger initialization failed: %s", err))
 	}
 	log = logger.New("discovery")
 	log.Info(fmt.Sprintf("DataDirectory:%s", cfg.DataDirectory))
