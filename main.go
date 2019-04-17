@@ -9,14 +9,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"strconv"
 	"sync"
 	"syscall"
 
-	"github.com/hashicorp/hcl"
+	lua "github.com/bitmark-inc/bitmarkd/configuration"
 	zmq "github.com/pebbe/zmq4"
 
 	"github.com/bitmark-inc/logger"
@@ -30,22 +29,6 @@ var (
 	handlers map[string]cryptoCurrencyHandler
 )
 
-type currencyConfig struct {
-	URL              string `hcl:"url"`
-	SubEndpoint      string `hcl:"sub_endpoint"`
-	CachedBlockCount int    `hcl:"cached_block_count"`
-}
-
-type config struct {
-	PubEndpoint string `hcl:"pub_endpoint"`
-	RepEndpoint string `hcl:"rep_endpoint"`
-	Currency    struct {
-		Bitcoin  currencyConfig
-		Litecoin currencyConfig
-	} `hcl:"currency"`
-	Logging logger.Configuration `hcl:"logging"`
-}
-
 type cryptoCurrencyHandler interface {
 	rescanRecentBlocks(wg *sync.WaitGroup)
 	handleTxQuery(ts int64) interface{}
@@ -56,27 +39,25 @@ func init() {
 	var path string
 	flag.StringVar(&path, "conf", "", "Specify configuration file")
 	flag.Parse()
-
-	dat, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(fmt.Sprintf("read conf file failed: %s", err))
+	if err := lua.ParseConfigurationFile(path, &cfg); err != nil {
+		panic(fmt.Sprintf("config file read failed: %s", err))
 	}
-
-	if err = hcl.Unmarshal(dat, &cfg); nil != err {
-		panic(fmt.Sprintf("parse conf file failed: %s", err))
-	}
-
-	if err = logger.Initialise(cfg.Logging); err != nil {
+	if err := logger.Initialise(cfg.Logging); err != nil {
 		panic(fmt.Sprintf("logger initialization failed: %s", err))
 	}
 	log = logger.New("discovery")
+	log.Info(fmt.Sprintf("DataDirectory:%s", cfg.DataDirectory))
+	log.Info(fmt.Sprintf("PubEndpoint:%s", cfg.PubEndpoint))
+	log.Info(fmt.Sprintf("RepEndpoint:%s", cfg.RepEndpoint))
+	log.Info(fmt.Sprintf("Bitcoin URL:%s CachedBlockCount:%d SubEndpoint:%s", cfg.Currency.Bitcoin.URL, cfg.Currency.Bitcoin.CachedBlockCount, cfg.Currency.Bitcoin.SubEndpoint))
+	log.Info(fmt.Sprintf("Litecoin URL:%s CachedBlockCount:%d SubEndpoint:%s", cfg.Currency.Litecoin.URL, cfg.Currency.Litecoin.CachedBlockCount, cfg.Currency.Litecoin.SubEndpoint))
+	log.Info(fmt.Sprintf("LogDir:%s LogFile:%s", cfg.Logging.Directory, cfg.Logging.File))
 
-	pub, err = zmq.NewSocket(zmq.PUB)
+	pub, err := zmq.NewSocket(zmq.PUB)
 	if err != nil {
 		panic(err)
 	}
 	pub.SetIpv6(true)
-
 	err = pub.Bind(cfg.PubEndpoint)
 	if err != nil {
 		panic(err)

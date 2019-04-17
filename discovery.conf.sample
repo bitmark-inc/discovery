@@ -1,27 +1,52 @@
-pub_endpoint = "tcp://*:5566"
+-- discovery.conf  -*- mode: lua -*-
 
-rep_endpoint = "tcp://*:5567"
+local M = {}
 
-currency {
-  bitcoin {
-    url = "http://0.0.0.0:8332"
-    cached_block_count = 432
-    sub_endpoint = "tcp://0.0.0.0:8339"
-  }
+-- helper functions
+function read_file(name)
+    local f, err = io.open(M.data_directory .. "/" .. name, "r")
+    if f == nil then
+        return nil
+    end
+    local r = f:read("*a")
+    f:close()
+    return r
+end
 
-  litecoin {
-    url = "http://0.0.0.0:9332"
-    cached_block_count = 1728
-    sub_endpoint = "tcp://0.0.0.0:9339"
-  }
+
+-- set the directory for data and log files
+M.data_directory = arg[0]:match("(.*/)")  -- dir from configuration file
+--M.data_directory = "."                    -- current directory
+--M.data_directory = "/var/lib/recorderd"   -- absolute path
+M.pub_endpoint = "tcp://*:5566"
+M.rep_endpoint = "tcp://*:5567"
+
+-- connect to bitmarkd
+M.currency = {
+    bitcoin = {
+        url = "http://0.0.0.0:8332",
+        cached_block_count = 432,
+        sub_endpoint = "tcp://0.0.0.0:8339"
+    },
+
+    litecoin = {
+        url = "http://0.0.0.0:9332",
+        cached_block_count = 1728,
+        sub_endpoint = "tcp://0.0.0.0:9339"
+      }
 }
 
-logging {
-  directory = "/var/lib/discovery/log"
-  file = "discovery.log"
-  size = 1048576
-  count = 10
-  levels {
-    DEFAULT = "info"
-  }
+-- logging configuration
+M.logging = {
+    directory = "log",
+    file = "discovery.log",
+    size = 1048576,
+    count = 20,
+    console = true, -- set false in PRODUCTION
+    levels = {
+        DEFAULT = "info",
+    }
 }
+
+-- return the complete configuration
+return M
