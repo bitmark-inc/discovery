@@ -13,27 +13,28 @@ function read_file(name)
     return r
 end
 
-
 -- set the directory for data and log files
 M.data_directory = arg[0]:match("(.*/)")  -- dir from configuration file
 --M.data_directory = "."                    -- current directory
---M.data_directory = "/var/lib/recorderd"   -- absolute path
+--M.data_directory = "/var/lib/discovery"   -- absolute path
+
+-- ZeroMQ listening ports
 M.pub_endpoint = "tcp://*:5566"
 M.rep_endpoint = "tcp://*:5567"
 
--- connect to bitmarkd
+-- connect to currency daemons
 M.currency = {
     bitcoin = {
         url = "http://0.0.0.0:8332",
-        cached_block_count = 432,
-        sub_endpoint = "tcp://0.0.0.0:8339"
+        sub_endpoint = "tcp://0.0.0.0:8339",
+        cached_block_count = 432
     },
 
     litecoin = {
         url = "http://0.0.0.0:9332",
-        cached_block_count = 1728,
-        sub_endpoint = "tcp://0.0.0.0:9339"
-      }
+        sub_endpoint = "tcp://0.0.0.0:9339",
+        cached_block_count = 1728
+    }
 }
 
 -- logging configuration
@@ -42,9 +43,9 @@ M.logging = {
     file = "discovery.log",
     size = 1048576,
     count = 20,
-    console = true, -- set false in PRODUCTION
+    console = false,
     levels = {
-        DEFAULT = "info",
+        DEFAULT = "error",
     }
 }
 

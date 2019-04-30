@@ -15,9 +15,9 @@ import (
 	"sync"
 	"syscall"
 
-	lua "github.com/bitmark-inc/bitmarkd/configuration"
 	zmq "github.com/pebbe/zmq4"
 
+	lua "github.com/bitmark-inc/bitmarkd/configuration"
 	"github.com/bitmark-inc/logger"
 )
 
