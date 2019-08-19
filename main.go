@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -36,12 +38,17 @@ type cryptoCurrencyHandler interface {
 }
 
 func init() {
-	var path string
-	flag.StringVar(&path, "conf", "", "Specify configuration file")
+	var configurationFile string
+	flag.StringVar(&configurationFile, "conf", "", "Specify configuration file")
 	flag.Parse()
-	if err := lua.ParseConfigurationFile(path, &cfg); err != nil {
+	if err := lua.ParseConfigurationFile(configurationFile, &cfg); err != nil {
 		panic(fmt.Sprintf("config file read failed: %s", err))
 	}
+
+	if !strings.HasPrefix(cfg.Logging.Directory, "/") {
+		cfg.Logging.Directory = path.Join(cfg.DataDirectory, cfg.Logging.Directory)
+	}
+
 	if err := logger.Initialise(cfg.Logging); err != nil {
 		panic(fmt.Sprintf("logger initialization failed: %s", err))
 	}
