@@ -23,17 +23,20 @@ M.pub_endpoint = "tcp://*:5566"
 M.rep_endpoint = "tcp://*:5567"
 
 -- connect to currency daemons
+hours_retained = 100
 M.currency = {
     bitcoin = {
         url = "http://0.0.0.0:8332",
         sub_endpoint = "tcp://0.0.0.0:8339",
-        cached_block_count = 432
+        -- block time 10 min
+        cached_block_count = hours_retained * 60 / 10
     },
 
     litecoin = {
         url = "http://0.0.0.0:9332",
         sub_endpoint = "tcp://0.0.0.0:9339",
-        cached_block_count = 1728
+        -- block time 2.5 min
+        cached_block_count = hours_retained * 60 * 4 / 10
     }
 }
 
