@@ -46,12 +46,12 @@ func init() {
 		panic(fmt.Sprintf("logger initialization failed: %s", err))
 	}
 	log = logger.New("discovery")
-	log.Info(fmt.Sprintf("DataDirectory:%s", cfg.DataDirectory))
-	log.Info(fmt.Sprintf("PubEndpoint:%s", cfg.PubEndpoint))
-	log.Info(fmt.Sprintf("RepEndpoint:%s", cfg.RepEndpoint))
-	log.Info(fmt.Sprintf("Bitcoin URL:%s CachedBlockCount:%d SubEndpoint:%s", cfg.Currency.Bitcoin.URL, cfg.Currency.Bitcoin.CachedBlockCount, cfg.Currency.Bitcoin.SubEndpoint))
-	log.Info(fmt.Sprintf("Litecoin URL:%s CachedBlockCount:%d SubEndpoint:%s", cfg.Currency.Litecoin.URL, cfg.Currency.Litecoin.CachedBlockCount, cfg.Currency.Litecoin.SubEndpoint))
-	log.Info(fmt.Sprintf("LogDir:%s LogFile:%s", cfg.Logging.Directory, cfg.Logging.File))
+	log.Infof("DataDirectory: %s", cfg.DataDirectory)
+	log.Infof("PubEndpoint: %s", cfg.PubEndpoint)
+	log.Infof("RepEndpoint: %s", cfg.RepEndpoint)
+	log.Infof("Bitcoin URL: %s  CachedBlockCount: %d  SubEndpoint: %s", cfg.Currency.Bitcoin.URL, cfg.Currency.Bitcoin.CachedBlockCount, cfg.Currency.Bitcoin.SubEndpoint)
+	log.Infof("Litecoin URL: %s  CachedBlockCount: %d  SubEndpoint: %s", cfg.Currency.Litecoin.URL, cfg.Currency.Litecoin.CachedBlockCount, cfg.Currency.Litecoin.SubEndpoint)
+	log.Infof("LogDir: %s  LogFile: %s", cfg.Logging.Directory, cfg.Logging.File)
 
 	pub, err := zmq.NewSocket(zmq.PUB)
 	if err != nil {
