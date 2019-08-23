@@ -10,6 +10,6 @@ type litecoinHandler struct {
 	*bitcoinHandler
 }
 
-func newLitecoinHandler(name string, conf currencyConfig, pub *zmq.Socket) *litecoinHandler {
-	return &litecoinHandler{newBitcoinHandler(name, conf, pub)}
+func newLitecoinHandler(name string, conf currencyConfig, pubIPv4 *zmq.Socket, pubIPv6 *zmq.Socket) *litecoinHandler {
+	return &litecoinHandler{newBitcoinHandler(name, conf, pubIPv4, pubIPv6)}
 }

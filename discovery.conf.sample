@@ -19,8 +19,14 @@ M.data_directory = arg[0]:match("(.*/)")  -- dir from configuration file
 --M.data_directory = "/var/lib/discovery"   -- absolute path
 
 -- ZeroMQ listening ports
-M.pub_endpoint = "tcp://*:5566"
-M.rep_endpoint = "tcp://*:5567"
+M.pub_endpoint = {
+    ipv4 = "tcp://0.0.0.0:5566",
+    ipv6 = "tcp://[::]:5566"
+}
+M.rep_endpoint = {
+    ipv4 = "tcp://0.0.0.0:5567",
+    ipv6 = "tcp://[::]:5567",
+}
 
 -- connect to currency daemons
 hours_retained = 100

@@ -53,16 +53,19 @@ type bitcoinHandler struct {
 	log              *logger.L
 	fetcher          *fetcher
 	sub              *zmq.Socket
-	pub              *zmq.Socket
+	pubIPv4          *zmq.Socket
+	pubIPv6          *zmq.Socket
 	cachedBlockCount int
 	cachedBlocks     []bitcoinBlock
 }
 
-func newBitcoinHandler(name string, conf currencyConfig, pub *zmq.Socket) *bitcoinHandler {
+func newBitcoinHandler(name string, conf currencyConfig, pubIPv4 *zmq.Socket, pubIPv6 *zmq.Socket) *bitcoinHandler {
+
 	sub, err := zmq.NewSocket(zmq.SUB)
 	if err != nil {
 		panic(err)
 	}
+
 	sub.Connect(conf.SubEndpoint)
 	sub.SetSubscribe("hashtx")
 	sub.SetSubscribe("hashblock")
@@ -75,7 +78,8 @@ func newBitcoinHandler(name string, conf currencyConfig, pub *zmq.Socket) *bitco
 		log:              log,
 		fetcher:          &fetcher{conf.URL},
 		sub:              sub,
-		pub:              pub,
+		pubIPv4:          pubIPv4,
+		pubIPv6:          pubIPv6,
 		cachedBlockCount: conf.CachedBlockCount,
 		cachedBlocks:     make([]bitcoinBlock, 0),
 	}
@@ -106,13 +110,12 @@ func (b *bitcoinHandler) rescanRecentBlocks(wg *sync.WaitGroup) {
 }
 
 func (b *bitcoinHandler) handleTxQuery(ts int64) interface{} {
-	b.RLock()
-	blocks := b.cachedBlocks
-	b.RUnlock()
 
 	txs := make([]bitcoinTransaction, 0)
+
+	b.RLock()
 scan_blocks:
-	for _, block := range blocks {
+	for _, block := range b.cachedBlocks {
 		if block.Time < ts {
 			continue scan_blocks
 		}
@@ -123,6 +126,7 @@ scan_blocks:
 			}
 		}
 	}
+	b.RUnlock()
 
 	return txs
 }
@@ -160,7 +164,8 @@ func (b *bitcoinHandler) processNewTx(txHash string) {
 	if isBitcoinPaymentTX(&tx) {
 		b.log.Infof("payment tx id: %s", tx.TxID)
 		data, _ := json.Marshal(tx)
-		b.pub.SendMessage(b.name, data)
+		b.pubIPv4.SendMessage(b.name, data)
+		b.pubIPv6.SendMessage(b.name, data)
 	}
 }
 
@@ -179,7 +184,8 @@ func (b *bitcoinHandler) processNewBlock(blockHash string) {
 		if isBitcoinPaymentTX(&tx) {
 			b.log.Infof("resend: payment tx id: %s", tx.TxID)
 			data, _ := json.Marshal(tx)
-			b.pub.SendMessage(b.name, data)
+			b.pubIPv4.SendMessage(b.name, data)
+			b.pubIPv6.SendMessage(b.name, data)
 		}
 	}
 }
