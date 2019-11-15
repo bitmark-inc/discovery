@@ -21,7 +21,7 @@ M.data_directory = arg[0]:match("(.*/)")  -- dir from configuration file
 -- ZeroMQ listening ports
 M.pub_endpoint = {
     ipv4 = "tcp://0.0.0.0:5566",
-    ipv6 = "tcp://[::]:5566"
+    ipv6 = "tcp://[::]:5566",
 }
 M.rep_endpoint = {
     ipv4 = "tcp://0.0.0.0:5567",
@@ -35,15 +35,15 @@ M.currency = {
         url = "http://0.0.0.0:8332",
         sub_endpoint = "tcp://0.0.0.0:8339",
         -- block time 10 min
-        cached_block_count = hours_retained * 60 / 10
+        cached_block_count = hours_retained * 60 / 10,
     },
 
     litecoin = {
         url = "http://0.0.0.0:9332",
         sub_endpoint = "tcp://0.0.0.0:9339",
         -- block time 2.5 min
-        cached_block_count = hours_retained * 60 * 4 / 10
-    }
+        cached_block_count = hours_retained * 60 * 4 / 10,
+    },
 }
 
 -- logging configuration
@@ -55,7 +55,7 @@ M.logging = {
     console = false,
     levels = {
         DEFAULT = "error",
-    }
+    },
 }
 
 -- return the complete configuration
